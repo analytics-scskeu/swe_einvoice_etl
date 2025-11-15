@@ -20,7 +20,7 @@ def get_received_invoice_json(guid, branch_code):
     # Return invoice json
     print(response.status_code)
     if response.status_code == 200:
-        response_json = response.json()
+        response_json = response.json()['document']
     else:
         print(response.content)
         raise
