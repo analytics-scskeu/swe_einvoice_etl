@@ -13,7 +13,7 @@ CREATE TABLE customer_supplier (
     last_peppol_check TIMESTAMP,
     primary_email_address VARCHAR(300),
     secondary_email_addresses TEXT,
-    sipplier_flag CHAR(1),
+    supplier_flag CHAR(1),
     last_update TIMESTAMP NOT NULL,
     PRIMARY KEY (branch_code, vat_id, code)
 );
