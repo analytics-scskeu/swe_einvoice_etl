@@ -1,9 +1,12 @@
 from sqlalchemy import create_engine
 import os
 import pandas as pd
+from io import BytesIO
+from azure.storage.blob import BlobClient
+from azure.identity import DefaultAzureCredential
+from azure.core.exceptions import ResourceNotFoundError
 from dotenv import load_dotenv
 load_dotenv()
-
 
 
 def get_engine(user, password, database, host, port):
@@ -62,8 +65,39 @@ def get_customer_peppol_id(engine, branch_code, customer_supplier_code, vat_id):
 
     return peppol_scheme, peppol_id
 
+def read_file_from_blob_storage(file_name, container):
 
+    """
+    Read file from Azure Blob Storage. 
+    Return dataframe if csv
+    """
 
+    account_url = 'https://sweeinvoicetest.blob.core.windows.net'
+
+    credential = DefaultAzureCredential()
+    blob = BlobClient(
+        account_url=account_url,
+        container_name=container,
+        blob_name=file_name,
+        credential=credential
+    )
+
+    try:
+        content = blob.download_blob().readall()
+    except ResourceNotFoundError:
+        print('There is no blob storage or container')
+        raise
+    except Exception as e:
+        print(f'{type(e)} : {e}')
+
+    if container == 'invoice-csv-send':
+        # Return dataframe if csv
+        df = pd.read_csv(BytesIO(content))
+        if len(df) != 0:
+            return df
+        else:
+            print('Dataframe is empty')
+            raise
 
 # def get_container_client(connection_string, container):
     
