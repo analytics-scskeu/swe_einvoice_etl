@@ -40,17 +40,16 @@ def get_storecove_credentials(branch_code):
         print(f'{type(e)} : {e}')
         raise
 
-def get_customer_peppol_id(engine, branch_code, customer_supplier_code, vat_id):
+def get_customer_peppol_id(engine, branch_code, customer_supplier_code, vat_id, supplier_flag):
 
     """
     Get PEPPOL scheme and id for a customer
     """
-    target_table = 'customer'
 
     try:
-        df = pd.read_sql(f'''SELECT peppol_scheme, peppol_id 
-                        FROM {target_table} 
-                        WHERE branch_code = '{branch_code}, {target_table}_code = {customer_supplier_code} AND vat_id = {vat_id}'''
+        df = pd.read_sql(f"""SELECT peppol_scheme, peppol_id, supplier_flag 
+                        FROM customer_supplier
+                        WHERE branch_code = '{branch_code}', code = '{customer_supplier_code}' AND vat_id = '{vat_id}' AND supplier_flag = '{supplier_flag}'"""
                         , con=engine)
     except Exception as e:
         print(f'{type(e) : {e}}')

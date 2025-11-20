@@ -5,7 +5,7 @@ import os
 import urllib
 import json
 from utils.utils_receive_invoice import load_received_invoice_db
-from utils.utils_customer_master import update_db
+from utils.utils_customer_master import update_db_from_ui
 from utils.utils import get_engine
 from datetime import datetime
 
@@ -43,11 +43,13 @@ class ReceiveInvoiceWebhookListItem(BaseModel):
 @app.patch('/update_customer_supplier_db')
 def update_customer_supplier_db(request : CustomerUpdateRequest):
 
-    engine = get_engine()
+    engine = get_engine(user, password, database, host, port)
     
-    success = update_db(engine, 'customer_supplier', request['updates'])
+    success = update_db_from_ui(engine, request['updates'])
     if success:
         return {'message' : 'success'}
+    else:
+        raise HTTPException(status_code=500, detail='Internal Server error')
 
 @app.post('/storecove_webhook_receive_document/DE')
 async def webhook_receive_document_dusseldolf(request: ReceiveInvoiceWebhookListItem):
