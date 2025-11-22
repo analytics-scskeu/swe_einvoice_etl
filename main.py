@@ -19,13 +19,14 @@ database = os.environ['DB_DATABASE']
 
 class CustomerListItem(BaseModel):
     branch_code : str
-    vat_id : str
     code : str
-    b2x : Optional[str] = None
-    peppol_scheme : Optional[str] = None
-    peppol_id : Optional[str] = None
-    sending_method : Optional[str] = None
-    secondary_email_addresses : Optional[str] = None
+    vat_id : str
+    supplier_flag : str
+    b2x : str
+    peppol_scheme : str
+    peppol_id : str
+    sending_method : str
+    secondary_email_addresses : list[str] = []
 
 class CustomerUpdateRequest(BaseModel):
     updates : List[CustomerListItem]
@@ -40,12 +41,12 @@ class ReceiveInvoiceWebhookListItem(BaseModel):
     tenant_id : str
     parseable : bool
 
-@app.patch('/update_customer_supplier_db')
+@app.post('/update_customer_supplier_db')
 def update_customer_supplier_db(request : CustomerUpdateRequest):
 
     engine = get_engine(user, password, database, host, port)
     
-    success = update_db_from_ui(engine, request['updates'])
+    success = update_db_from_ui(engine, request.updates)
     if success:
         return {'message' : 'success'}
     else:
