@@ -2,7 +2,13 @@ import json
 import requests
 from sqlalchemy import text
 from utils.utils import get_storecove_credentials, get_customer_peppol_id
+import logging
 api_url = 'https://api.storecove.com/api/v2'
+
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+fhandler = logging.FileHandler(filename=r'/home/azureuser/swe_einvoice_etl/logs/utils_customer_master_log')
+logger.addHandler(fhandler)
 
 def check_peppol_availablity(engine, branch_code, customer_supplier_code, vat_id, supplier_flag, api_url):
 
@@ -54,12 +60,11 @@ def update_db_from_ui(engine, updates_li):
     # Extract columns to update from the list
     key_columns = ['branch_code', 'code', 'vat_id', 'supplier_flag']
     update_columns =  [
-                "country_code",
-                'peppol_scheme'
-                "peppol_id",
-                "b2x",
-                "sending_method",
-                "secondary_email_addresses"
+        "b2x",
+        'peppol_scheme',
+        "peppol_id",
+        "sending_method",
+        "secondary_email_addresses"
     ]
 
     # Order of columns in VALUES
@@ -72,24 +77,17 @@ def update_db_from_ui(engine, updates_li):
     for i, row in enumerate(updates_li):
         placeholder_row = []
         for col in ordered_columns:
-            param_key = f"{col}"
+            param_key = f"{col}_{i}"   # <-- unique per row
             placeholder_row.append(f":{param_key}")
-            value = row.get(col)
+            value = getattr(row, col)
             params[param_key] = value if value not in ("", " ") else None
+
         values_rows.append("(" + ", ".join(placeholder_row) + ")")
 
     values_sql = ",\n".join(values_rows)
 
-    # Build SET clause
-    set_clauses = [
-        f"{col} = v.{col}"
-        for col in update_columns
-    ]
-    set_sql = ",\n    ".join(set_clauses)
-
-    # Build JOIN condition
-    join_conditions = [f"t.{col} = v.{col}" for col in key_columns]
-    join_sql = " AND ".join(join_conditions)
+    set_sql = ",\n    ".join(f"{col} = v.{col}" for col in update_columns)
+    join_sql = " AND ".join(f"t.{col} = v.{col}" for col in key_columns)
 
     query = text(f"""
         UPDATE customer_supplier AS t
